@@ -8,7 +8,6 @@ var userSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
-        unique: true
     },
     password: {
         type: String,
@@ -29,22 +28,33 @@ exports.register = (req, res) => {
         return;
     }
 
-    // Save user
-    var user = new User(req.body);
-    user.save((err, user) => {
-        if (err) {
-            if(err.code==11000) {
-                res.status(400).send({message: "You already have an account!"});
-            }
-            else {
-                res.status(400).send({message: "Some error in creating new account"});
-            }
-            return;
+    // Validate email
+    User.findOne({
+        email: req.body.email,
+    })
+    .then(user => {
+        console.log(user)
+        if(user) {
+            res.status(400).send({message: "You already have an account!"})
         }
         else {
-            res.json(user);
+            // Save user
+            var user = new User(req.body);
+            user.save()
+            .then(data => {
+                res.status(200).send({message: "Registered!", user}); 
+            })
+            .catch(err => {
+                // res.status(400).send({message: "Some error in creating new account"}); 
+                res.status(400).send({message: err.message || "Some error in creating new account"});
+            })
         }
-    });
+    })
+    .catch(err => {
+        res.status(500).send({message: "Error in validating email"})
+    })
+
+    
 }
 
 exports.login = (req, res) => {
@@ -57,16 +67,20 @@ exports.login = (req, res) => {
     
     User.findOne({
         email: req.body.email,
-        password: req.body.password
     })
     .then(user => {
         console.log(user)
-        if(!user) {
-            res.status(404).send({message: "Invalid credentials"})
+        if(user) {
+            if (req.body.password === user.password) {
+                res.status(200).send({message: "Logged in!", user})
+                console.log('hi')
+            }
+            else {
+                res.status(400).send({message: "Incorrect password!"})
+            }
         }
         else {
-            res.send(user)
-            console.log('hi')
+            res.status(404).send({message: "User doesn't exist"})
         }
     })
     .catch(err => {
@@ -77,33 +91,24 @@ exports.login = (req, res) => {
 exports.deleteAll = (req, res) => {
     console.log("Delete All")
     
-    User.deleteMany({}, (err, result) => {
-        if(err) {
-            res.status(500).send({message: "Error in deleting all users"})
-        }
-        else {
-            res.send({message: "All users deleted"})
-        }
+    User.deleteMany()
+    .then(result => {
+        res.status(200).send({message: "All users deleted"})
+    })
+    .catch(err => {
+        res.status(500).send({message: err.message || "Some error occurred while deleting all users"})
     })
 }
 
 exports.findAll = (req, res) => {
     console.log("Find All")
-    // User.find()
-    //     .then(student => {
-    //         res.send(student)
-    //     })
-    //     .catch(err => {
-    //         res.status(500).send({message: err.message || "Some error occurred while doing get on student/students"})
-    //     })
 
-    User.find({}, (err, result) => {
-        if(err) {
-            res.status(500).send({message: "Error in finding all users"})
-        }
-        else {
-            res.send(result)
-        }
+    User.find()
+    .then(result => {
+        res.send(result)
+    })
+    .catch(err => {
+        res.status(500).send({message: err.message || "Some error occurred while finding all users"})
     })
 }
     
