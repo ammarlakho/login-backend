@@ -111,24 +111,3 @@ exports.findAll = (req, res) => {
         res.status(500).send({message: err.message || "Some error occurred while finding all users"})
     })
 }
-    
-
-
-
-
-
-
-    // Validate email
-    // User.find({
-    //     email: req.body.email,
-    // })
-    // .then(user => {
-    //     if(user.length > 0) {
-    //         res.status(400).send({message: "You already have an account!"})
-    //         return;
-    //     }
-    // })
-    // .catch(err => {
-    //     res.status(500).send({message: "Error in validating email"})
-    // })
-    // console.log("HERE")
